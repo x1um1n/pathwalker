@@ -1,0 +1,29 @@
+version: '3.6'
+services:
+  mysql:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: "pathwalker"
+      MYSQL_USER: "pathwalker"
+      MYSQL_PASSWORD: "secretpassword"
+      MYSQL_ROOT_PASSWORD: "supersecretpassword"
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    volumes:
+      - ./mysql-init:/docker-entrypoint-initdb.d/
+      - ./mysql_data:/var/lib/mysql
+  app:
+    build: ./
+    ports:
+    - "8080:8080"
+    - "9080:9080"
+    environment:
+      KOANF_ENVIRONMENT: docker
+      KOANF_DBHOST: mysql
+    depends_on:
+      - "mysql"
+volumes:
+  pathwalker-db:

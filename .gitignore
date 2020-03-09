@@ -13,3 +13,6 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+## DO NOT COMMIT PLAIN TEXT PASSWORDS TO GITHUB
+config/secrets.yml
