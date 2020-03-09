@@ -1,0 +1,6 @@
+environment: local
+dbhost: 127.0.0.1
+dbuser:
+dbport: 3306
+dbschema: pathfinder
+dbretries: 10
