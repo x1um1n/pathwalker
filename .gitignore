@@ -16,3 +16,5 @@
 
 ## DO NOT COMMIT PLAIN TEXT PASSWORDS TO GITHUB
 config/secrets.yml
+## DO NOT COMMIT LOCAL DB TO GITHUB
+mysql_data

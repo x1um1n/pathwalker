@@ -23,6 +23,7 @@ services:
     environment:
       KOANF_ENVIRONMENT: docker
       KOANF_DBHOST: mysql
+      KOANF_DBPASSWD: secretpassword
     depends_on:
       - "mysql"
 volumes:

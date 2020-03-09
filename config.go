@@ -19,11 +19,11 @@ var K = koanf.New(".")
 // overrides/appends to those values with environment variables prefixed with KOANF_
 func LoadKoanf() {
 	log.Println("Reading default config")
-	err := K.Load(file.Provider("configs/default.yml"), yaml.Parser())
+	err := K.Load(file.Provider("config/default.yml"), yaml.Parser())
 	checkerr.CheckFatal(err, "Error reading default config file")
 
   log.Println("Checking for local secrets")
-	err = K.Load(file.Provider("configs/secrets.yml"), yaml.Parser())
+	err = K.Load(file.Provider("config/secrets.yml"), yaml.Parser())
 	checkerr.Check(err, "Error reading local secrets file")
 
 	log.Println("Checking environment for overrides")
