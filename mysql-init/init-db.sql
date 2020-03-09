@@ -39,4 +39,4 @@ INSERT INTO paths
 INSERT INTO surveys
   (`survey_id`, `path_id`, `survey_date`, `survey_submitted_by`, `survey_detail`, `image_ids`)
   VALUES
-    ('test-survey-001', 'HAN/3', '2020-03-12', 'mbeaney641@gmail.com', 'oooh, this is a lovely path.  such scenery!  such beauty!  pity about the litter', '');
+    ('test-survey-001', 'HAN-3', '2020-03-12', 'mbeaney641@gmail.com', 'oooh, this is a lovely path.  such scenery!  such beauty!  pity about the litter', '');
