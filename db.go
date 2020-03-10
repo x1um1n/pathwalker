@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"strings"
 	"time"
 
 	// blank import required for DB package
@@ -36,4 +37,49 @@ func InitDB() {
 			checkerr.CheckFatal(err, "Error connecting to database :(")
 		}
 	}
+}
+
+// getSurvey retrieves a specified survey from the db and returns
+func getSurvey(sid string) (s Survey, e error) {
+	log.Println("Getting survey " + sid)
+
+	qry, e := DB.Prepare("SELECT * FROM surveys WHERE survey_id = '" + sid + "'")
+	defer qry.Close()
+	if !checkerr.Check(e, "Error preparing SELECT from surveys") {
+		var imageIDs string
+		row := qry.QueryRow()
+		switch e = row.Scan(&s.SurveyID, &s.PathID, &s.Date, &s.User, &s.Detail, &imageIDs); e {
+		case sql.ErrNoRows:
+			checkerr.Check(e, "No survey found for "+sid)
+		case nil:
+			img := strings.Split(imageIDs, ",")
+			for _, im := range img {
+				qry, e = DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
+				checkerr.Check(e, "Error preparing SELECT from images")
+				defer qry.Close()
+
+				var i Image
+				row = qry.QueryRow()
+				switch e = row.Scan(&i.ImageID, &i.PathID, &i.Filename, &i.Desc, &i.Location.Latitude, &i.Location.Longitude); e {
+				case sql.ErrNoRows:
+					log.Println("No images found for imageID " + im)
+				case nil:
+					s.Images = append(s.Images, i)
+				default:
+					checkerr.Check(e, "Error reading image data for "+im)
+				}
+			}
+		default:
+			checkerr.Check(e, "Error reading survey data for "+sid)
+		}
+	}
+
+	return
+}
+
+// putSurvey writes a survey struct to the DB
+// if a survey record already exists with the supplied ID, it will be overwritten
+func putSurvey(s Survey) (e error) {
+	//fixme
+	return
 }
