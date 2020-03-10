@@ -52,28 +52,34 @@ func getSurvey(sid string) (s Survey, e error) {
 		case sql.ErrNoRows:
 			checkerr.Check(e, "No survey found for "+sid)
 		case nil:
-			img := strings.Split(imageIDs, ",")
-			for _, im := range img {
-				qry, e = DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
-				checkerr.Check(e, "Error preparing SELECT from images")
-				defer qry.Close()
-
-				var i Image
-				row = qry.QueryRow()
-				switch e = row.Scan(&i.ImageID, &i.PathID, &i.Filename, &i.Desc, &i.Location.Latitude, &i.Location.Longitude); e {
-				case sql.ErrNoRows:
-					log.Println("No images found for imageID " + im)
-				case nil:
-					s.Images = append(s.Images, i)
-				default:
-					checkerr.Check(e, "Error reading image data for "+im)
-				}
-			}
+			s.Images = getImages(imageIDs)
 		default:
 			checkerr.Check(e, "Error reading survey data for "+sid)
 		}
 	}
 
+	return
+}
+
+// getImages takes a CSL of imageIDs and returns a slice containing details of the relevant images
+func getImages(imageIDs string) (ims []Image) {
+	img := strings.Split(imageIDs, ",")
+	for _, im := range img {
+		qry, e := DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
+		checkerr.Check(e, "Error preparing SELECT from images")
+		defer qry.Close()
+
+		var i Image
+		row := qry.QueryRow()
+		switch e = row.Scan(&i.ImageID, &i.PathID, &i.Filename, &i.Desc, &i.Location.Latitude, &i.Location.Longitude); e {
+		case sql.ErrNoRows:
+			log.Println("No images found for imageID " + im)
+		case nil:
+			ims = append(ims, i)
+		default:
+			checkerr.Check(e, "Error reading image data for "+im)
+		}
+	}
 	return
 }
 
