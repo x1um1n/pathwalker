@@ -64,8 +64,5 @@ func main() {
 
 	go startHealth()
 
-	http.HandleFunc("/upload", UploadImage) // image upload handler
-
-	go http.ListenAndServe("0.0.0.0:80", nil)
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

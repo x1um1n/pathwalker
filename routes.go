@@ -18,6 +18,7 @@ import (
 // AddRoutes adds api routes and assigns handlers for them
 func AddRoutes() *chi.Mux {
 	router := chi.NewRouter()
+	router.Post("/upload", UploadImage)
 	router.Post("/add", AddSurvey)
 	router.Post("/update/{survey-id}", UpdateSurvey)
 	// router.Post("/delete/{survey-id}", DeleteSurvey)

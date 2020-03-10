@@ -6,6 +6,6 @@ COPY . .
 RUN go build .
 RUN go test ./...
 
-EXPOSE 80 8080 9080
+EXPOSE 8080 9080
 
 CMD ["/go/src/pathwalker/pathwalker"]
