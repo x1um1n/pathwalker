@@ -82,6 +82,20 @@ func getImages(imageIDs string) (ims []Image) {
 	return
 }
 
+// makeImageCSL extracts the IDs from a slice of Images and returns a CSL
+func makeImageCSL(ims []Image) (s string) {
+	for i, img := range ims {
+		if i == 0 {
+			s = img.ImageID + ","
+		} else if i == len(ims) {
+			s += img.ImageID
+		} else {
+			s += img.ImageID + ","
+		}
+	}
+	return
+}
+
 // putSurvey writes a survey struct to the DB
 // if a survey record already exists with the supplied ID, it will be overwritten
 func putSurvey(s Survey) (e error) {

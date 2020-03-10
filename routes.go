@@ -66,17 +66,7 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 	checkerr.Check500(es, w, "Error preparing INSERT")
 	defer stmt.Close()
 
-	// create a CSL of imageIDs to be attached to the report
-	var imageIDs string
-	for i, img := range s.Images {
-		if i == 0 {
-			imageIDs = img.ImageID + ","
-		} else if i == len(s.Images) {
-			imageIDs += img.ImageID
-		} else {
-			imageIDs += img.ImageID + ","
-		}
-	}
+	imageIDs := makeImageCSL(s.Images)
 
 	_, err = stmt.Exec(s.PathID, s.Date, s.User, s.Detail, imageIDs)
 	checkerr.Check500(err, w, "Error inserting survey:", s.PathID, s.Date, s.User, s.Detail, imageIDs)
