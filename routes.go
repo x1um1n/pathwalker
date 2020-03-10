@@ -23,8 +23,8 @@ func AddRoutes() *chi.Mux {
 	router.Post("/update/{survey-id}", UpdateSurvey)
 	// router.Post("/delete/{survey-id}", DeleteSurvey)
 	router.Get("/list/{path-id}", ListSurveysForPath)
-	router.Get("/fetch/survey/{survey-id}", ListSurvey)
-	// router.Get("/list/images/{path-id}", ListImages)
+	router.Get("/fetch/survey/{survey-id}", FetchSurvey)
+	// router.Get("/list/images/{path-id}", ListImagesForPath)
 	return router
 }
 
@@ -122,8 +122,8 @@ func ListSurveysForPath(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, surveys)
 }
 
-// ListSurvey returns the entire survey record requested
-func ListSurvey(w http.ResponseWriter, r *http.Request) {
+// FetchSurvey returns the entire survey record requested
+func FetchSurvey(w http.ResponseWriter, r *http.Request) {
 	surveyID := chi.URLParam(r, "survey-id")
 	log.Println("Getting survey " + surveyID)
 
