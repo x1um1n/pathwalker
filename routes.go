@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi"
@@ -9,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/x1um1n/checkerr"
 )
@@ -17,10 +19,10 @@ import (
 func AddRoutes() *chi.Mux {
 	router := chi.NewRouter()
 	router.Post("/add", AddSurvey)
-	// router.Post("/update/{survey-id}", UpdateSurvey)
+	router.Post("/update/{survey-id}", UpdateSurvey)
 	// router.Post("/delete/{survey-id}", DeleteSurvey)
 	router.Get("/list/{path-id}", ListSurveysForPath)
-	// router.Get("/fetch/survey/{survey-id}", ListSurvey)
+	router.Get("/fetch/survey/{survey-id}", ListSurvey)
 	// router.Get("/list/images/{path-id}", ListImages)
 	return router
 }
@@ -89,6 +91,11 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, response)
 }
 
+// UpdateSurvey updates a survey record with data sent in POST
+func UpdateSurvey(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // ListSurveysForPath returns all the surveys completed for a given path
 func ListSurveysForPath(w http.ResponseWriter, r *http.Request) {
 	pathID := chi.URLParam(r, "path-id")
@@ -107,8 +114,48 @@ func ListSurveysForPath(w http.ResponseWriter, r *http.Request) {
 		var s Survey
 		err = rows.Scan(&s.SurveyID, &s.Date, &s.User)
 		checkerr.Check500(err, w, "Error reading results from query")
+		s.PathID = pathID
 		surveys = append(surveys, s)
 	}
 
 	render.JSON(w, r, surveys)
+}
+
+// ListSurvey returns the entire survey record requested
+func ListSurvey(w http.ResponseWriter, r *http.Request) {
+	surveyID := chi.URLParam(r, "survey-id")
+	log.Println("Getting survey " + surveyID)
+
+	qry, err := DB.Prepare("SELECT * FROM surveys WHERE survey_id = '" + surveyID + "'")
+	checkerr.Check500(err, w, "Error preparing SELECT from surveys")
+	defer qry.Close()
+
+	var s Survey
+	var imageIDs string
+	row := qry.QueryRow()
+	switch err = row.Scan(&s.SurveyID, &s.PathID, &s.Date, &s.User, &s.Detail, &imageIDs); err {
+	case sql.ErrNoRows:
+		checkerr.Check500(err, w, "No survey found for "+surveyID)
+	case nil:
+		img := strings.Split(imageIDs, ",")
+		for _, im := range img {
+			qry, err = DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
+			checkerr.Check500(err, w, "Error preparing SELECT from images")
+			defer qry.Close()
+
+			var i Image
+			row = qry.QueryRow()
+			switch err = row.Scan(&i.ImageID, &i.PathID, &i.Filename, &i.Desc, &i.Location.Latitude, &i.Location.Longitude); err {
+			case sql.ErrNoRows:
+				log.Println("No images found for imageID " + im)
+			case nil:
+				s.Images = append(s.Images, i)
+			default:
+				checkerr.Check500(err, w, "Error reading image data for "+im)
+			}
+		}
+		render.JSON(w, r, s)
+	default:
+		checkerr.Check500(err, w, "Error reading survey data for "+surveyID)
+	}
 }
