@@ -46,13 +46,12 @@ func getSurvey(sid string) (s Survey, e error) {
 	qry, e := DB.Prepare("SELECT * FROM surveys WHERE survey_id = '" + sid + "'")
 	defer qry.Close()
 	if !checkerr.Check(e, "Error preparing SELECT from surveys") {
-		var imageIDs string
 		row := qry.QueryRow()
-		switch e = row.Scan(&s.SurveyID, &s.PathID, &s.Date, &s.User, &s.Detail, &imageIDs); e {
+		switch e = row.Scan(&s.SurveyID, &s.PathID, &s.Date, &s.User, &s.Detail, &s.ImageIDs); e {
 		case sql.ErrNoRows:
 			checkerr.Check(e, "No survey found for "+sid)
 		case nil:
-			s.Images = getImages(imageIDs)
+			s.Images = getImages(s.ImageIDs)
 		default:
 			checkerr.Check(e, "Error reading survey data for "+sid)
 		}

@@ -30,4 +30,5 @@ type Survey struct {
 	User     string  `json:"survey-submitted-by"`
 	Detail   string  `json:"detail"`
 	Images   []Image `json:"images"`
+	ImageIDs string  `json:"image-ids"`
 }
