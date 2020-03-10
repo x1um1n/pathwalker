@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi"
@@ -10,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/x1um1n/checkerr"
 )
@@ -61,7 +59,7 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body) //parse json in request
 	var s Survey
 	err := decoder.Decode(&s)
-	checkerr.Check(err, "Error decoding json")
+	checkerr.Check500(err, w, "Error decoding json")
 
 	log.Println("Inserting new survey for path " + s.PathID)
 	stmt, es := DB.Prepare("INSERT INTO surveys (`survey_id`,`path_id`,`survey_date`,`survey_submitted_by`,`survey_detail`,`image_ids`) VALUES (UUID(),?,?,?,?,?)")
@@ -93,8 +91,34 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateSurvey updates a survey record with data sent in POST
+// blank fields are ignored, non-blank fields overwrite DB record
 func UpdateSurvey(w http.ResponseWriter, r *http.Request) {
+	s, err := getSurvey(chi.URLParam(r, "survey-id"))
+	checkerr.Check500(err, w, "Error retrieving survey "+chi.URLParam(r, "survey-id"))
 
+	decoder := json.NewDecoder(r.Body) //parse json in request
+	var s2 Survey
+	err = decoder.Decode(&s2)
+	checkerr.Check500(err, w, "Error decoding json")
+
+	if s2.PathID != "" {
+		s.PathID = s2.PathID
+	}
+	if s2.Date != "" {
+		s.Date = s2.Date
+	}
+	if s2.User != "" {
+		s.User = s2.User
+	}
+	if s2.Detail != "" {
+		s.Detail = s2.Detail
+	}
+
+	//fixme: image IDs
+
+	err = putSurvey(s)
+	checkerr.Check500(err, w, "Failed to write updated record to the database")
+	render.JSON(w, r, s)
 }
 
 // ListSurveysForPath returns all the surveys completed for a given path
@@ -124,39 +148,7 @@ func ListSurveysForPath(w http.ResponseWriter, r *http.Request) {
 
 // FetchSurvey returns the entire survey record requested
 func FetchSurvey(w http.ResponseWriter, r *http.Request) {
-	surveyID := chi.URLParam(r, "survey-id")
-	log.Println("Getting survey " + surveyID)
-
-	qry, err := DB.Prepare("SELECT * FROM surveys WHERE survey_id = '" + surveyID + "'")
-	checkerr.Check500(err, w, "Error preparing SELECT from surveys")
-	defer qry.Close()
-
-	var s Survey
-	var imageIDs string
-	row := qry.QueryRow()
-	switch err = row.Scan(&s.SurveyID, &s.PathID, &s.Date, &s.User, &s.Detail, &imageIDs); err {
-	case sql.ErrNoRows:
-		checkerr.Check500(err, w, "No survey found for "+surveyID)
-	case nil:
-		img := strings.Split(imageIDs, ",")
-		for _, im := range img {
-			qry, err = DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
-			checkerr.Check500(err, w, "Error preparing SELECT from images")
-			defer qry.Close()
-
-			var i Image
-			row = qry.QueryRow()
-			switch err = row.Scan(&i.ImageID, &i.PathID, &i.Filename, &i.Desc, &i.Location.Latitude, &i.Location.Longitude); err {
-			case sql.ErrNoRows:
-				log.Println("No images found for imageID " + im)
-			case nil:
-				s.Images = append(s.Images, i)
-			default:
-				checkerr.Check500(err, w, "Error reading image data for "+im)
-			}
-		}
-		render.JSON(w, r, s)
-	default:
-		checkerr.Check500(err, w, "Error reading survey data for "+surveyID)
-	}
+	s, err := getSurvey(chi.URLParam(r, "survey-id"))
+	checkerr.Check500(err, w, "Error retrieving survey "+chi.URLParam(r, "survey-id"))
+	render.JSON(w, r, s)
 }
