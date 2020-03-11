@@ -26,7 +26,6 @@ func AddRoutes() *chi.Mux {
 	router.Post("/delete/{survey-id}", DeleteSurvey)
 	router.Get("/list/{path-id}", ListSurveysForPath)
 	router.Get("/fetch/survey/{survey-id}", FetchSurvey)
-	// router.Get("/list/images/{path-id}", ListImagesForPath)
 	return router
 }
 
