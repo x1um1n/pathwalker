@@ -1,3 +1,4 @@
+// data structures
 package main
 
 // Path is used to store information about the footpaths

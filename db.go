@@ -1,3 +1,4 @@
+// database functions
 package main
 
 import (
