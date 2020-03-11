@@ -77,8 +77,9 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 // UpdateSurvey updates a survey record with data sent in POST
 // blank fields are ignored, non-blank fields overwrite DB record
 func UpdateSurvey(w http.ResponseWriter, r *http.Request) {
-	s, err := getSurvey(chi.URLParam(r, "survey-id"))
-	checkerr.Check500(err, w, "Error retrieving survey "+chi.URLParam(r, "survey-id"))
+	sid := chi.URLParam(r, "survey-id")
+	s, err := getSurvey(sid)
+	checkerr.Check500(err, w, "Error retrieving survey "+sid)
 
 	decoder := json.NewDecoder(r.Body) //parse json in request
 	var s2 Survey
@@ -98,7 +99,7 @@ func UpdateSurvey(w http.ResponseWriter, r *http.Request) {
 		s.Detail = s2.Detail
 	}
 
-	//fixme: image IDs
+	s.ImageIDs = makeImageCSL(s.Images)
 
 	err = putSurvey(s)
 	checkerr.Check500(err, w, "Failed to write updated record to the database")
