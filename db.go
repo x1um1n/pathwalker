@@ -115,7 +115,7 @@ func putSurvey(s Survey) (e error) {
 		if s.ImageIDs == "" {
 			s.ImageIDs = makeImageCSL(s.Images)
 		}
-		stmt, es := DB.Prepare("UPDATE surveys SET `path_id` = " + s.PathID + ",`survey_date` = " + s.Date + ",`survey_submitted_by` = " + s.User + ",`survey_detail` = " + s.Detail + ",`image_ids` = " + s.ImageIDs)
+		stmt, es := DB.Prepare("UPDATE surveys SET `path_id` = '" + s.PathID + "',`survey_date` = '" + s.Date + "',`survey_submitted_by` = '" + s.User + "',`survey_detail` = '" + s.Detail + "',`image_ids` = '" + s.ImageIDs + "'")
 		checkerr.Check(es, "Error preparing UPDATE")
 		defer stmt.Close()
 
