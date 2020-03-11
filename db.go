@@ -125,3 +125,22 @@ func putSurvey(s Survey) (e error) {
 
 	return
 }
+
+// delSurvey deletes a survey record from the DB and purges any associated images
+func delSurvey(sid string) (e error) {
+	log.Println("Finding survey to delete: " + sid)
+	_, e = getSurvey(sid)
+	if !checkerr.Check(e, "Survey not found in database") {
+		stmt, e := DB.Prepare("DELETE FROM surveys WHERE `survey_id` = ?")
+		checkerr.Check(e, "Error preparing DELETE")
+		defer stmt.Close()
+
+		_, e = stmt.Exec(sid)
+		if !checkerr.Check(e, "Error deleting survey: ", sid) {
+			log.Printf("Survey %s successfully deleted\n", sid)
+			//fixme: purge images
+		}
+	}
+
+	return
+}

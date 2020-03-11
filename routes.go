@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/render"
 	"io"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 
 	"github.com/x1um1n/checkerr"
 )
@@ -19,7 +20,7 @@ func AddRoutes() *chi.Mux {
 	router.Post("/upload", UploadImage)
 	router.Post("/add", AddSurvey)
 	router.Post("/update/{survey-id}", UpdateSurvey)
-	// router.Post("/delete/{survey-id}", DeleteSurvey)
+	router.Post("/delete/{survey-id}", DeleteSurvey)
 	router.Get("/list/{path-id}", ListSurveysForPath)
 	router.Get("/fetch/survey/{survey-id}", FetchSurvey)
 	// router.Get("/list/images/{path-id}", ListImagesForPath)
@@ -63,13 +64,11 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 
 	err = putSurvey(s)
 	imageIDs := makeImageCSL(s.Images)
-	checkerr.Check(err, "Error inserting survey: ", s.PathID, s.Date, s.User, s.Detail, imageIDs)
-
 	response := make(map[string]string)
-	if err != nil {
+	if checkerr.Check(err, "Error inserting survey: ", s.PathID, s.Date, s.User, s.Detail, imageIDs) {
 		response["message"] = "Error adding survey - " + err.Error()
 	} else {
-		response["message"] = "Successfully added survey"
+		response["message"] = "Successfully added survey "
 	}
 	render.JSON(w, r, response)
 }
@@ -133,7 +132,23 @@ func ListSurveysForPath(w http.ResponseWriter, r *http.Request) {
 
 // FetchSurvey returns the entire survey record requested
 func FetchSurvey(w http.ResponseWriter, r *http.Request) {
-	s, err := getSurvey(chi.URLParam(r, "survey-id"))
-	checkerr.Check500(err, w, "Error retrieving survey "+chi.URLParam(r, "survey-id"))
+	sid := chi.URLParam(r, "survey-id")
+	s, err := getSurvey(sid)
+	checkerr.Check500(err, w, "Error retrieving survey "+sid)
 	render.JSON(w, r, s)
+}
+
+// DeleteSurvey deletes the survey from the database
+func DeleteSurvey(w http.ResponseWriter, r *http.Request) {
+	sid := chi.URLParam(r, "survey-id")
+	err := delSurvey(sid)
+
+	response := make(map[string]string)
+
+	if checkerr.Check500(err, w, "Error deleting survey "+sid) {
+		response["message"] = "Error deleting survey - " + err.Error()
+	} else {
+		response["message"] = "Successfully deleted survey " + sid
+	}
+	render.JSON(w, r, response)
 }
