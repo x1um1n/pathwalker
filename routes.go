@@ -57,7 +57,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 				log.Println("Writing data to temp file")
 				_, err = io.Copy(out, file)
 				if !checkerr.Check500(err, w, "Error reading : "+img.Filename) {
-					fmt.Fprintf(w, "Files uploaded successfully : ")
+					fmt.Fprintf(w, "Temp file written successfully : ")
 					fmt.Fprintf(w, img.Filename+"\n")
 
 					img.Location, err = getLocation("temp-images/" + img.Filename)
@@ -66,7 +66,7 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 					// fixme: files are uploaded as 0 bytes
 					// Upload the file to S3.
 					uploader := s3manager.NewUploader(sess)
-
+					file.Seek(0, io.SeekStart)
 					u, err := uploader.Upload(&s3manager.UploadInput{
 						Bucket: aws.String(K.String("images_bucket")),
 						Key:    aws.String(img.Filename),
