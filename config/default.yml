@@ -1,6 +1,10 @@
 environment: local
+
 dbhost: 127.0.0.1
 dbuser: pathwalker
 dbport: 3306
 dbschema: pathwalker
 dbretries: 10
+
+images_bucket: pathwalker-images-test
+s3_region: eu-west-2

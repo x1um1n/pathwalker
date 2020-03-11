@@ -10,9 +10,8 @@ type Path struct {
 // Image is used to store details of uploaded images
 type Image struct {
 	ImageID  string     `json:"image-id"`
-	PathID   string     `json:"path-id"`
 	Filename string     `json:"filename"`
-	Desc     string     `json:"image-description"`
+	S3Path   string     `json:"s3-location"`
 	Location Coordinate `json:"image-coordinates"`
 }
 

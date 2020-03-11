@@ -22,9 +22,8 @@ CREATE TABLE surveys (
 DROP TABLE IF EXISTS images;
 CREATE TABLE images (
   `image_id`           CHAR(36),
-  `path_id`            CHAR(36),
   `filename`           VARCHAR(255),
-  `image_description`  TEXT,
+  `s3-location`        VARCHAR(255),
   `image_latitude`     FLOAT,
   `image_longitude`    FLOAT,
   PRIMARY KEY(`image_id`)

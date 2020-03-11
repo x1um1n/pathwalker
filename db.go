@@ -3,12 +3,14 @@ package main
 import (
 	"database/sql"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
 	// blank import required for DB package
 	_ "github.com/go-sql-driver/mysql"
 
+	"github.com/google/uuid"
 	"github.com/x1um1n/checkerr"
 )
 
@@ -60,42 +62,6 @@ func getSurvey(sid string) (s Survey, e error) {
 	return
 }
 
-// getImages takes a CSL of imageIDs and returns a slice containing details of the relevant images
-func getImages(imageIDs string) (ims []Image) {
-	img := strings.Split(imageIDs, ",")
-	for _, im := range img {
-		qry, e := DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
-		checkerr.Check(e, "Error preparing SELECT from images")
-		defer qry.Close()
-
-		var i Image
-		row := qry.QueryRow()
-		switch e = row.Scan(&i.ImageID, &i.PathID, &i.Filename, &i.Desc, &i.Location.Latitude, &i.Location.Longitude); e {
-		case sql.ErrNoRows:
-			log.Println("No images found for imageID " + im)
-		case nil:
-			ims = append(ims, i)
-		default:
-			checkerr.Check(e, "Error reading image data for "+im)
-		}
-	}
-	return
-}
-
-// makeImageCSL extracts the IDs from a slice of Images and returns a CSL
-func makeImageCSL(ims []Image) (s string) {
-	for i, img := range ims {
-		if i == 0 {
-			s = img.ImageID + ","
-		} else if i == len(ims) {
-			s += img.ImageID
-		} else {
-			s += img.ImageID + ","
-		}
-	}
-	return
-}
-
 // putSurvey writes a survey struct to the DB
 // if a survey record already exists with the supplied ID, it will be overwritten
 func putSurvey(s Survey) (e error) {
@@ -140,6 +106,45 @@ func delSurvey(sid string) (e error) {
 			log.Printf("Survey %s successfully deleted\n", sid)
 			//fixme: purge images
 		}
+	}
+
+	return
+}
+
+// getImages takes a CSL of imageIDs and returns a slice containing details of the relevant images
+func getImages(imageIDs string) (ims []Image) {
+	img := strings.Split(imageIDs, ",")
+	for _, im := range img {
+		qry, e := DB.Prepare("SELECT * FROM images WHERE image_id = '" + im + "'")
+		checkerr.Check(e, "Error preparing SELECT from images")
+		defer qry.Close()
+
+		var i Image
+		row := qry.QueryRow()
+		switch e = row.Scan(&i.ImageID, &i.Filename, &i.Location.Latitude, &i.Location.Longitude); e {
+		case sql.ErrNoRows:
+			log.Println("No images found for imageID " + im)
+		case nil:
+			ims = append(ims, i)
+		default:
+			checkerr.Check(e, "Error reading image data for "+im)
+		}
+	}
+	return
+}
+
+// putImage inserts an image record corresponding to an uploaded file
+func putImage(im Image) (id string, e error) {
+	log.Println("Inserting new image for path " + im.S3Path)
+	stmt, e := DB.Prepare("INSERT INTO images (`image_id`,`filename`,`s3-location`,`image_latitude`,`image_longitude`) VALUES (?,?,?,?,?)")
+	checkerr.Check(e, "Error preparing INSERT")
+	defer stmt.Close()
+
+	id = uuid.New().String()
+
+	_, e = stmt.Exec(id, im.Filename, im.S3Path, im.Location.Latitude, im.Location.Longitude)
+	if checkerr.Check(e, "Error inserting image record:", id, im.Filename, im.S3Path, strconv.FormatFloat(im.Location.Latitude, 'E', -1, 64), strconv.FormatFloat(im.Location.Longitude, 'E', -1, 64)) {
+		id = "" //blank out the id if the insert fails
 	}
 
 	return

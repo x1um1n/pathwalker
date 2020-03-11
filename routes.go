@@ -12,6 +12,9 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/x1um1n/checkerr"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // AddRoutes adds api routes and assigns handlers for them
@@ -38,21 +41,67 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 
 	files := formdata.File["images"] //field name for upload form, should be a multiple file input
 
-	for _, f := range files {
-		file, err := f.Open()
+	var imageIDs []string
+	for i := range files {
+		file, err := files[i].Open()
 		defer file.Close()
-		checkerr.Check500(err, w, "Error reading : "+f.Filename)
 
-		out, err := os.Create("temp-images/" + f.Filename)
-		defer out.Close()
-		checkerr.Check500(err, w, "Unable to create the file for writing : "+f.Filename)
+		var img Image
+		img.Filename = files[i].Filename
 
-		_, err = io.Copy(out, file)
-		checkerr.Check500(err, w, "Error reading : "+f.Filename)
+		if !checkerr.Check500(err, w, "Error reading : "+img.Filename) {
+			log.Println("Creating temp file")
+			out, err := os.Create("temp-images/" + img.Filename)
+			defer out.Close()
+			if !checkerr.Check500(err, w, "Unable to create the file for writing : "+img.Filename) {
+				log.Println("Writing data to temp file")
+				_, err = io.Copy(out, file)
+				if !checkerr.Check500(err, w, "Error reading : "+img.Filename) {
+					fmt.Fprintf(w, "Files uploaded successfully : ")
+					fmt.Fprintf(w, img.Filename+"\n")
 
-		fmt.Fprintf(w, "Files uploaded successfully : ")
-		fmt.Fprintf(w, f.Filename+"\n")
+					img.Location, err = getLocation("temp-images/" + img.Filename)
+					checkerr.Check(err, "Error extracting location data from image file")
+
+					// fixme: files are uploaded as 0 bytes
+					// Upload the file to S3.
+					uploader := s3manager.NewUploader(sess)
+
+					u, err := uploader.Upload(&s3manager.UploadInput{
+						Bucket: aws.String(K.String("images_bucket")),
+						Key:    aws.String(img.Filename),
+						Body:   file,
+					})
+					if !checkerr.Check500(err, w, "Failed to upload file to S3") {
+						fmt.Fprintf(w, "Successfully uploaded %s to %s\n", files[i].Filename, K.String("images_bucket"))
+						img.S3Path = u.Location
+					}
+
+					id, err := putImage(img)
+					if !checkerr.Check500(err, w, "Error storing image data in database") {
+						imageIDs = append(imageIDs, id)
+					}
+				}
+			}
+			err = os.Remove("temp-images/" + img.Filename)
+			checkerr.Check(err, "Error deleting temp file")
+		}
 	}
+
+	var IDs string
+	for i, im := range imageIDs {
+		switch i {
+		case 0:
+			IDs = im
+		default:
+			IDs = IDs + "," + im
+		}
+	}
+
+	response := make(map[string]string)
+	response["message"] = "Successfully added images with IDs: "
+	response["image-ids"] = IDs
+	render.JSON(w, r, response)
 }
 
 // AddSurvey is a handler function which adds a survey
