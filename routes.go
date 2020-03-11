@@ -62,10 +62,9 @@ func UploadImage(w http.ResponseWriter, r *http.Request) {
 					img.Location, err = getLocation("temp-images/" + img.Filename)
 					checkerr.Check(err, "Error extracting location data from image file")
 
-					// fixme: files are uploaded as 0 bytes
 					// Upload the file to S3.
 					uploader := s3manager.NewUploader(sess)
-					file.Seek(0, io.SeekStart)
+					file.Seek(0, io.SeekStart) // go back to the start of the file
 					u, err := uploader.Upload(&s3manager.UploadInput{
 						Bucket: aws.String(K.String("images_bucket")),
 						Key:    aws.String(img.Filename),
