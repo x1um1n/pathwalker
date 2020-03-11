@@ -61,15 +61,9 @@ func AddSurvey(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&s)
 	checkerr.Check500(err, w, "Error decoding json")
 
-	log.Println("Inserting new survey for path " + s.PathID)
-	stmt, es := DB.Prepare("INSERT INTO surveys (`survey_id`,`path_id`,`survey_date`,`survey_submitted_by`,`survey_detail`,`image_ids`) VALUES (UUID(),?,?,?,?,?)")
-	checkerr.Check500(es, w, "Error preparing INSERT")
-	defer stmt.Close()
-
+	err = putSurvey(s)
 	imageIDs := makeImageCSL(s.Images)
-
-	_, err = stmt.Exec(s.PathID, s.Date, s.User, s.Detail, imageIDs)
-	checkerr.Check500(err, w, "Error inserting survey:", s.PathID, s.Date, s.User, s.Detail, imageIDs)
+	checkerr.Check(err, "Error inserting survey: ", s.PathID, s.Date, s.User, s.Detail, imageIDs)
 
 	response := make(map[string]string)
 	if err != nil {

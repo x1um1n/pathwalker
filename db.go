@@ -99,6 +99,29 @@ func makeImageCSL(ims []Image) (s string) {
 // putSurvey writes a survey struct to the DB
 // if a survey record already exists with the supplied ID, it will be overwritten
 func putSurvey(s Survey) (e error) {
-	//fixme
+	_, err := getSurvey(s.SurveyID)
+	if err == sql.ErrNoRows {
+		log.Println("Inserting new survey for path " + s.PathID)
+		stmt, es := DB.Prepare("INSERT INTO surveys (`survey_id`,`path_id`,`survey_date`,`survey_submitted_by`,`survey_detail`,`image_ids`) VALUES (UUID(),?,?,?,?,?)")
+		checkerr.Check(es, "Error preparing INSERT")
+		defer stmt.Close()
+
+		s.ImageIDs = makeImageCSL(s.Images)
+
+		_, err = stmt.Exec(s.PathID, s.Date, s.User, s.Detail, s.ImageIDs)
+		checkerr.Check(err, "Error inserting survey:", s.PathID, s.Date, s.User, s.Detail, s.ImageIDs)
+	} else {
+		log.Println("Updating survey " + s.SurveyID)
+		if s.ImageIDs == "" {
+			s.ImageIDs = makeImageCSL(s.Images)
+		}
+		stmt, es := DB.Prepare("UPDATE surveys SET `path_id` = " + s.PathID + ",`survey_date` = " + s.Date + ",`survey_submitted_by` = " + s.User + ",`survey_detail` = " + s.Detail + ",`image_ids` = " + s.ImageIDs)
+		checkerr.Check(es, "Error preparing UPDATE")
+		defer stmt.Close()
+
+		_, err = stmt.Exec()
+		checkerr.Check(err, "Error updating survey:", s.PathID, s.Date, s.User, s.Detail, s.ImageIDs)
+	}
+
 	return
 }
