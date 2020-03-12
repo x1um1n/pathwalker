@@ -122,7 +122,7 @@ func getImages(imageIDs string) (ims []Image) {
 
 		var i Image
 		row := qry.QueryRow()
-		switch e = row.Scan(&i.ImageID, &i.Filename, &i.Location.Latitude, &i.Location.Longitude); e {
+		switch e = row.Scan(&i.ImageID, &i.Filename, &i.S3Path, &i.Location.Latitude, &i.Location.Longitude); e {
 		case sql.ErrNoRows:
 			log.Println("No images found for imageID " + im)
 		case nil:

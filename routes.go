@@ -193,7 +193,10 @@ func ListSurveysForPath(w http.ResponseWriter, r *http.Request) {
 func FetchSurvey(w http.ResponseWriter, r *http.Request) {
 	sid := chi.URLParam(r, "survey-id")
 	s, err := getSurvey(sid)
-	checkerr.Check500(err, w, "Error retrieving survey "+sid)
+	if !checkerr.Check500(err, w, "Error retrieving survey "+sid) {
+		s.Images = getImages(s.ImageIDs)
+	}
+
 	render.JSON(w, r, s)
 }
 

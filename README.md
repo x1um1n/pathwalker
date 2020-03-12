@@ -86,8 +86,7 @@ A (very basic) example image upload form can be found in the examples directory.
 
 A list of all surveys for a given path can be retrieved by sending a GET request to `/v1/api/list/{path-id}`
 
-A specific survey can be retrieved by sending a GET request to `/v1/api/fetch/survey/{survey-id}`
-TODO: Retrieve images from S3
+A specific survey can be retrieved by sending a GET request to `/v1/api/fetch/survey/{survey-id}`  The survey record contains a slice of all images including the locations they can be downloaded from S3.  It is recommended you put these behind a CDN.
 
 #### Administration
 Basic administration of the survey data can be achieved by use of the `/v1/api/update/{survey-id}` and `/v1/api/delete/{survey-id}` endpoints.
