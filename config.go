@@ -22,7 +22,7 @@ func LoadKoanf() {
 	err := K.Load(file.Provider("config/default.yml"), yaml.Parser())
 	checkerr.CheckFatal(err, "Error reading default config file")
 
-  log.Println("Checking for local secrets")
+	log.Println("Checking for local secrets")
 	err = K.Load(file.Provider("config/secrets.yml"), yaml.Parser())
 	checkerr.Check(err, "Error reading local secrets file")
 
@@ -31,5 +31,9 @@ func LoadKoanf() {
 		return strings.ToLower(strings.TrimPrefix(s, "KOANF_"))
 	}), nil)
 
-	log.Printf("Using config for %s environment", K.String("environment"))
+	log.Printf("Checking for %s config", K.String("environment"))
+	err = K.Load(file.Provider("config/"+K.String("environment")+".yml"), yaml.Parser())
+	if !checkerr.CheckFatal(err, "Error reading "+K.String("environment")+" config file") {
+		log.Printf("Using config for %s environment", K.String("environment"))
+	}
 }

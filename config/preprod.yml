@@ -1,0 +1,10 @@
+environment: preprod
+
+dbhost: preprod.mysql.address
+dbuser: pathwalker
+dbport: 3306
+dbschema: pathwalker
+dbretries: 10
+
+images_bucket: pathwalker-preprod-s3-bucket
+s3_region: eu-west-2
