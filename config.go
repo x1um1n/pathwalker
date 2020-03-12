@@ -33,7 +33,7 @@ func LoadKoanf() {
 
 	log.Printf("Checking for %s config", K.String("environment"))
 	err = K.Load(file.Provider("config/"+K.String("environment")+".yml"), yaml.Parser())
-	if !checkerr.CheckFatal(err, "Error reading "+K.String("environment")+" config file") {
+	if !checkerr.Check(err, "Error reading "+K.String("environment")+" config file") {
 		log.Printf("Using config for %s environment", K.String("environment"))
 	}
 }
