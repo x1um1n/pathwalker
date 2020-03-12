@@ -5,11 +5,11 @@ This should be easily integrated into the website of the council responsible for
 
 ## Endpoints
  - /v1/api/add
+ - /v1/api/upload
+ - /v1/api/update/{survey-id}
  - /v1/api/delete/{survey-id}
  - /v1/api/fetch/survey/{survey-id}
  - /v1/api/list/{path-id}
- - /v1/api/update/{survey-id}
- - /v1/api/upload
 
 ## Installation
 The included `docker-compose.yml` & `Dockerfile` can be used to build a container image that can either be hosted on a cluster, such as DockerSwarm or Kubernetes; or run on a local Docker instance for testing.
@@ -21,6 +21,13 @@ To build & start a local instance, simply run these two commands from the projec
 docker-compose build
 docker-compose up
 ```
+The webservice listens on `:8080` and serves up healthcheck endpoints on `:9080`
+
+eg http://localhost:9080/live?full=1
+
+If using for Kubernetes liveness/readiness-probes omit the parameter
+
+eg http://localhost:9080/ready
 
 #### Configuration
 pathwalker reads its config from YAML files stored in the `config` directory and environment variables prefixed with `KOANF_`.
@@ -76,3 +83,13 @@ To add a survey you will need to POST to two endpoints: `/v1/api/upload` to uplo
 ```
 
 A (very basic) example image upload form can be found in the examples directory.
+
+A list of all surveys for a given path can be retrieved by sending a GET request to `/v1/api/list/{path-id}`
+
+A specific survey can be retrieved by sending a GET request to `/v1/api/fetch/survey/{survey-id}`
+TODO: Retrieve images from S3
+
+#### Administration
+Basic administration of the survey data can be achieved by use of the `/v1/api/update/{survey-id}` and `/v1/api/delete/{survey-id}` endpoints.
+
+TODO: Deleting a survey will purge all associated images from S3
